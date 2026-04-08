@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Standard Bank SA — ISO 27001 Risk Assessment</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+body{background:#f8f7f2;color:#2c2c2a;font-size:14px}
+.topbar{background:#fff;border-bottom:1px solid #e0dfd8;padding:16px 32px;display:flex;align-items:center;justify-content:space-between}
+.topbar-title{font-size:17px;font-weight:600}
+.topbar-sub{font-size:12px;color:#888780;margin-top:2px}
+.container{max-width:1200px;margin:0 auto;padding:24px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.metric{background:#fff;border:1px solid #e0dfd8;border-radius:10px;padding:14px 18px}
+.metric-label{font-size:11px;color:#888780;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.metric-val{font-size:26px;font-weight:600}
+.tabs{display:flex;gap:2px;border-bottom:1px solid #e0dfd8;margin-bottom:24px}
+.tab{padding:9px 18px;font-size:13px;cursor:pointer;border:none;background:transparent;color:#888780;border-bottom:2px solid transparent;font-weight:500}
+.tab.active{color:#2c2c2a;border-bottom:2px solid #2c2c2a}
+.panel{display:none}.panel.active{display:block}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #e0dfd8}
+th{background:#f8f7f2;padding:10px 12px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#888780;font-weight:600;border-bottom:1px solid #e0dfd8}
+td{padding:10px 12px;border-bottom:1px solid #f0efe8;font-size:12px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf7}
+.badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:6px;font-weight:600}
+.badge-cr{background:#FCEBEB;color:#A32D2D}
+.badge-hi{background:#FAEEDA;color:#854F0B}
+.badge-me{background:#E6F1FB;color:#185FA5}
+.badge-lo{background:#EAF3DE;color:#3B6D11}
+.badge-pass{background:#EAF3DE;color:#3B6D11}
+.badge-partial{background:#FAEEDA;color:#854F0B}
+.badge-fail{background:#FCEBEB;color:#A32D2D}
+.filter-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+select,input[type=text]{padding:7px 10px;border:1px solid #e0dfd8;border-radius:8px;font-size:12px;background:#fff;color:#2c2c2a}
+.btn{padding:7px 14px;border:1px solid #e0dfd8;border-radius:8px;font-size:12px;background:#fff;cursor:pointer;font-weight:500}
+.btn:hover{background:#f0efe8}
+.btn-export{background:#2c2c2a;color:#fff;border-color:#2c2c2a}
+.btn-export:hover{background:#444}
+.score-wrap{display:flex;align-items:center;gap:6px}
+.score-bar{height:5px;border-radius:3px;background:#e0dfd8;width:60px}
+.score-fill{height:5px;border-radius:3px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.chart-card{background:#fff;border:1px solid #e0dfd8;border-radius:10px;padding:18px}
+.chart-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#888780;margin-bottom:14px}
+.popia-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px}
+.popia-card{background:#fff;border:1px solid #e0dfd8;border-radius:10px;padding:16px}
+.popia-top{display:flex;justify-content:space-between;align-items:flex-start}
+.popia-section-name{font-size:13px;font-weight:600}
+.popia-sub{font-size:11px;color:#888780;margin-top:2px}
+.popia-pct{font-size:22px;font-weight:700}
+.progress{height:5px;border-radius:3px;background:#e0dfd8;margin-top:10px}
+.prog-fill{height:5px;border-radius:3px}
+canvas{display:block}
+@media(max-width:700px){.metrics{grid-template-columns:1fr 1fr}.chart-grid{grid-template-columns:1fr}.popia-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">Standard Bank SA — ISO 27001 Risk Assessment</div>
+    <div class="topbar-sub">Experian SA Data Breach &nbsp;·&nbsp; 24 million records exposed &nbsp;·&nbsp; August 2020 &nbsp;·&nbsp; ISO/IEC 27001:2022 Clause 6.1.2</div>
+  </div>
+  <div style="font-size:11px;color:#888780">20 risks &nbsp;·&nbsp; 14 assets &nbsp;·&nbsp; POPIA scored</div>
+</div>
+
+<div class="container">
+
+  <div class="metrics" id="metrics"></div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('register',this)">Risk register</button>
+    <button class="tab" onclick="showTab('heatmap',this)">Heat map</button>
+    <button class="tab" onclick="showTab('charts',this)">Charts</button>
+    <button class="tab" onclick="showTab('popia',this)">POPIA compliance</button>
+  </div>
+
+  <!-- RISK REGISTER -->
+  <div id="register" class="panel active">
+    <div class="filter-row">
+      <select id="fRating" onchange="renderTable()">
+        <option value="">All ratings</option>
+        <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+      </select>
+      <select id="fDept" onchange="renderTable()"><option value="">All departments</option></select>
+      <select id="fAsset" onchange="renderTable()"><option value="">All assets</option></select>
+      <input type="text" id="fSearch" placeholder="Search threats or assets..." oninput="renderTable()" style="flex:1;min-width:160px">
+      <button class="btn btn-export" onclick="exportCSV()">Export CSV ↓</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead><tr>
+          <th>ID</th><th>Asset</th><th>Threat</th><th>ISO Clause</th>
+          <th>L</th><th>I</th><th>Inherent</th><th>Control</th>
+          <th>Residual</th><th>Dept</th><th>Owner</th><th>Due</th>
+        </tr></thead>
+        <tbody id="riskBody"></tbody>
+      </table>
+    </div>
+    <div id="tCount" style="font-size:11px;color:#888780;margin-top:8px;padding:4px 0"></div>
+  </div>
+
+  <!-- HEAT MAP -->
+  <div id="heatmap" class="panel">
+    <div style="background:#fff;border:1px solid #e0dfd8;border-radius:10px;padding:18px;overflow-x:auto">
+      <div style="font-size:12px;color:#888780;margin-bottom:12px">
+        5×5 ISO 27001 risk matrix — likelihood (x-axis) × impact (y-axis).
+        <span style="margin-left:12px">
+          <span style="display:inline-block;width:10px;height:10px;background:#fff0f0;border:1px solid #e0dfd8;border-radius:2px;vertical-align:middle"></span> Critical &nbsp;
+          <span style="display:inline-block;width:10px;height:10px;background:#fff8ec;border:1px solid #e0dfd8;border-radius:2px;vertical-align:middle"></span> High &nbsp;
+          <span style="display:inline-block;width:10px;height:10px;background:#eef5ff;border:1px solid #e0dfd8;border-radius:2px;vertical-align:middle"></span> Medium &nbsp;
+          <span style="display:inline-block;width:10px;height:10px;background:#f0faf2;border:1px solid #e0dfd8;border-radius:2px;vertical-align:middle"></span> Low
+        </span>
+      </div>
+      <canvas id="hmCanvas" width="600" height="520" style="max-width:100%"></canvas>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div id="charts" class="panel">
+    <div class="chart-grid">
+      <div class="chart-card">
+        <div class="chart-title">Inherent vs residual by rating</div>
+        <div id="c1leg"></div>
+        <div style="position:relative;height:220px">
+          <canvas id="c1" role="img" aria-label="Grouped bar chart comparing inherent and residual risk counts by severity rating"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Risks by department</div>
+        <div id="c2leg"></div>
+        <div style="position:relative;height:220px">
+          <canvas id="c2" role="img" aria-label="Doughnut chart showing distribution of risks across departments"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Top 10 risks by inherent score</div>
+        <div style="position:relative;height:340px">
+          <canvas id="c3" role="img" aria-label="Horizontal bar chart of the top 10 highest inherent risk scores"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">ISO 27001 clause coverage</div>
+        <div style="position:relative;height:340px">
+          <canvas id="c4" role="img" aria-label="Bar chart showing number of risks mapped to each ISO 27001 control clause"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPIA -->
+  <div id="popia" class="panel">
+    <div style="font-size:13px;color:#888780;margin-bottom:16px">
+      POPIA Act 4 of 2013 — compliance scoring against sections directly implicated by the Experian SA data breach.
+    </div>
+    <div class="metrics" id="popiaMetrics"></div>
+    <div class="popia-grid" id="popiaGrid"></div>
+    <table>
+      <thead><tr>
+        <th>Section</th><th>Requirement</th><th>Status</th><th>Score</th><th>Finding</th>
+      </tr></thead>
+      <tbody id="popiaBody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+const RISKS = [
+  {id:"R-01",asset:"Third-party data processors",threat:"Fraudulent data request via social engineering",iso:"A.15.1.1",l:5,i:5,control:"Weak identity verification of requestors",rl:2,ri:4,dept:"Compliance",owner:"Chief Risk Officer",due:"2024-03-31"},
+  {id:"R-02",asset:"Customer PII database",threat:"Unauthorised disclosure of 24M customer records",iso:"A.8.2.3",l:5,i:5,control:"Data classification & access controls",rl:2,ri:4,dept:"IT Security",owner:"CISO",due:"2024-02-28"},
+  {id:"R-03",asset:"Credit bureau data sharing",threat:"Legal obligation exploited to expose PII",iso:"A.15.2.1",l:4,i:5,control:"Vendor contractual controls",rl:2,ri:4,dept:"Legal",owner:"Legal Counsel",due:"2024-04-30"},
+  {id:"R-04",asset:"Customer authentication system",threat:"Increased phishing using breached demographic data",iso:"A.9.4.2",l:5,i:4,control:"MFA & step-up authentication",rl:2,ri:3,dept:"IT Security",owner:"Head of Cyber",due:"2024-01-31"},
+  {id:"R-05",asset:"Fraud detection platform",threat:"Fraudulent account takeover using SA ID numbers",iso:"A.9.2.1",l:4,i:4,control:"Behavioural analytics & fraud rules",rl:2,ri:3,dept:"Fraud",owner:"Head of Fraud",due:"2024-02-28"},
+  {id:"R-06",asset:"Information security policy",threat:"Inadequate third-party security assessment process",iso:"A.15.1.2",l:4,i:4,control:"Annual vendor risk reviews",rl:2,ri:3,dept:"Compliance",owner:"GRC Manager",due:"2024-03-31"},
+  {id:"R-07",asset:"Customer contact data",threat:"Targeted smishing and vishing campaigns",iso:"A.6.1.2",l:5,i:3,control:"Customer fraud awareness communications",rl:3,ri:3,dept:"Customer",owner:"Customer Experience",due:"2024-01-31"},
+  {id:"R-08",asset:"Regulatory reporting system",threat:"POPIA breach notification failure",iso:"A.18.1.4",l:3,i:5,control:"Incident response & notification SLAs",rl:2,ri:4,dept:"Compliance",owner:"Information Officer",due:"2024-02-28"},
+  {id:"R-09",asset:"Supplier onboarding process",threat:"Inadequate due diligence on Experian as operator",iso:"A.15.1.1",l:4,i:4,control:"Enhanced vendor assessment framework",rl:2,ri:3,dept:"Procurement",owner:"Vendor Risk Manager",due:"2024-04-30"},
+  {id:"R-10",asset:"SARB prudential reporting",threat:"Failure to notify regulator within required timeframe",iso:"A.18.1.1",l:3,i:5,control:"Regulatory escalation protocol",rl:2,ri:3,dept:"Compliance",owner:"CFO",due:"2024-03-31"},
+  {id:"R-11",asset:"Staff access controls",threat:"Insider misuse of customer PII post-breach",iso:"A.9.1.1",l:3,i:4,control:"Privileged access management & monitoring",rl:2,ri:3,dept:"IT Security",owner:"IT Operations",due:"2024-05-31"},
+  {id:"R-12",asset:"Incident response plan",threat:"Inadequate response to downstream breach notification",iso:"A.16.1.1",l:3,i:4,control:"IRP testing & tabletop exercises",rl:2,ri:3,dept:"IT Security",owner:"CISO",due:"2024-02-28"},
+  {id:"R-13",asset:"Data retention records",threat:"Retention of unnecessary PII at third parties",iso:"A.8.3.1",l:4,i:3,control:"Data minimisation & retention schedules",rl:2,ri:2,dept:"Legal",owner:"Information Officer",due:"2024-06-30"},
+  {id:"R-14",asset:"Security awareness programme",threat:"Staff unaware of social engineering indicators",iso:"A.7.2.2",l:4,i:3,control:"Mandatory annual security training",rl:2,ri:2,dept:"HR",owner:"HR Manager",due:"2024-04-30"},
+  {id:"R-15",asset:"Business continuity plan",threat:"Service disruption during breach investigation",iso:"A.17.1.1",l:2,i:4,control:"BCP & DR testing",rl:1,ri:3,dept:"Operations",owner:"COO",due:"2024-06-30"},
+  {id:"R-16",asset:"Public communications",threat:"Reputational damage from Telegram data leak",iso:"A.16.1.7",l:3,i:3,control:"Crisis communications plan",rl:2,ri:2,dept:"Marketing",owner:"Head of Comms",due:"2024-03-31"},
+  {id:"R-17",asset:"Mobile banking application",threat:"Credential stuffing using breached SA ID numbers",iso:"A.9.4.3",l:4,i:4,control:"Device binding & anomaly detection",rl:2,ri:3,dept:"IT Security",owner:"Head of Digital",due:"2024-02-28"},
+  {id:"R-18",asset:"Data processing agreements",threat:"No POPIA operator agreement with Experian",iso:"A.15.1.2",l:5,i:4,control:"Mandatory DPA review across all operators",rl:2,ri:3,dept:"Legal",owner:"Legal Counsel",due:"2024-01-31"},
+  {id:"R-19",asset:"Network segmentation",threat:"Lateral movement if internal breach occurs",iso:"A.13.1.3",l:2,i:4,control:"Micro-segmentation & zero trust controls",rl:1,ri:3,dept:"IT Security",owner:"Network Architect",due:"2024-05-31"},
+  {id:"R-20",asset:"Credit data transmission",threat:"Interception of data in transit to credit bureaus",iso:"A.10.1.1",l:2,i:4,control:"TLS 1.3 encryption & certificate pinning",rl:1,ri:2,dept:"IT Security",owner:"CISO",due:"2024-06-30"},
+];
+
+const POPIA = [
+  {section:"Section 19",title:"Security safeguards",controls:[
+    {req:"Implement appropriate technical measures",status:"partial",score:60,finding:"MFA deployed but social engineering controls absent at Experian"},
+    {req:"Implement appropriate organisational measures",status:"partial",score:50,finding:"Vendor oversight procedures insufficient — no periodic Experian audits"},
+    {req:"Prevent unlawful access to personal information",status:"fail",score:20,finding:"Data handed over without adequate requestor verification"},
+  ]},
+  {section:"Section 20",title:"Processing by operators",controls:[
+    {req:"Operator must process only with authorisation",status:"fail",score:30,finding:"Experian processed fraudulent inquiry without Standard Bank knowledge"},
+    {req:"Operator contractually bound to conditions",status:"partial",score:45,finding:"DPA existed but lacked identity verification requirements"},
+  ]},
+  {section:"Section 21",title:"Operator accountability",controls:[
+    {req:"Information officer must ensure operator compliance",status:"fail",score:25,finding:"No active monitoring of Experian data disclosure practices"},
+    {req:"Operator must notify on security compromise",status:"partial",score:55,finding:"Experian notified SABRIC but ~8 week delay observed"},
+  ]},
+  {section:"Section 22",title:"Notification of compromise",controls:[
+    {req:"Notify Information Regulator as soon as reasonably possible",status:"pass",score:80,finding:"Standard Bank notified regulator post-SABRIC announcement"},
+    {req:"Notify data subjects of compromise",status:"partial",score:65,finding:"Proactive communications issued but not personalised to each impacted customer"},
+    {req:"Describe steps taken to mitigate the compromise",status:"pass",score:85,finding:"Stepped-up authentication and fraud alerts deployed"},
+  ]},
+  {section:"Section 55",title:"Information officer duties",controls:[
+    {req:"Ensure POPIA compliance across the organisation",status:"partial",score:55,finding:"Information officer role established but vendor oversight gap identified"},
+    {req:"Develop, implement and maintain a compliance framework",status:"partial",score:60,finding:"Framework exists; third-party operator section under-developed"},
+  ]},
+];
+
+function rating(s){return s>=20?"Critical":s>=12?"High":s>=6?"Medium":"Low"}
+function badgeCls(r){return{Critical:"badge-cr",High:"badge-hi",Medium:"badge-me",Low:"badge-lo"}[r]}
+RISKS.forEach(r=>{r.inherent=r.l*r.i;r.iRating=rating(r.inherent);r.residual=r.rl*r.ri;r.rRating=rating(r.residual)});
+
+function renderMetrics(){
+  const c={Critical:0,High:0,Medium:0,Low:0};
+  RISKS.forEach(r=>c[r.iRating]++);
+  document.getElementById("metrics").innerHTML=`
+    <div class="metric"><div class="metric-label">Total risks</div><div class="metric-val">${RISKS.length}</div></div>
+    <div class="metric"><div class="metric-label">Critical</div><div class="metric-val" style="color:#A32D2D">${c.Critical}</div></div>
+    <div class="metric"><div class="metric-label">High</div><div class="metric-val" style="color:#854F0B">${c.High}</div></div>
+    <div class="metric"><div class="metric-label">Assets covered</div><div class="metric-val">${[...new Set(RISKS.map(r=>r.asset))].length}</div></div>`;
+}
+
+function populateFilters(){
+  const ds=document.getElementById("fDept"),as=document.getElementById("fAsset");
+  [...new Set(RISKS.map(r=>r.dept))].sort().forEach(d=>{const o=document.createElement("option");o.value=o.text=d;ds.add(o)});
+  [...new Set(RISKS.map(r=>r.asset))].sort().forEach(a=>{const o=document.createElement("option");o.value=o.text=a;as.add(o)});
+}
+
+function filtered(){
+  const rt=document.getElementById("fRating").value,
+        dp=document.getElementById("fDept").value,
+        at=document.getElementById("fAsset").value,
+        s=document.getElementById("fSearch").value.toLowerCase();
+  return RISKS.filter(r=>
+    (!rt||r.iRating===rt)&&(!dp||r.dept===dp)&&(!at||r.asset===at)&&
+    (!s||r.threat.toLowerCase().includes(s)||r.asset.toLowerCase().includes(s)));
+}
+
+function sbar(v,col){
+  return`<div class="score-wrap"><div class="score-bar"><div class="score-fill" style="width:${Math.round(v/25*100)}%;background:${col}"></div></div><span style="font-size:11px;color:#888;min-width:16px">${v}</span></div>`;
+}
+
+function renderTable(){
+  const risks=filtered();
+  document.getElementById("riskBody").innerHTML=risks.map(r=>`<tr>
+    <td style="font-weight:600;color:#888780">${r.id}</td>
+    <td style="max-width:110px;word-break:break-word">${r.asset}</td>
+    <td style="max-width:170px;word-break:break-word">${r.threat}</td>
+    <td style="white-space:nowrap;font-size:11px">${r.iso}</td>
+    <td>${r.l}</td><td>${r.i}</td>
+    <td><span class="badge ${badgeCls(r.iRating)}">${r.iRating}</span><br>${sbar(r.inherent,"#E24B4A")}</td>
+    <td style="max-width:130px;word-break:break-word;font-size:11px;color:#888">${r.control}</td>
+    <td><span class="badge ${badgeCls(r.rRating)}">${r.rRating}</span><br>${sbar(r.residual,"#378ADD")}</td>
+    <td style="font-size:11px">${r.dept}</td>
+    <td style="font-size:11px;white-space:nowrap">${r.owner}</td>
+    <td style="font-size:11px;white-space:nowrap">${r.due}</td>
+  </tr>`).join("");
+  document.getElementById("tCount").textContent=`Showing ${risks.length} of ${RISKS.length} risks`;
+}
+
+function exportCSV(){
+  const h=["ID","Asset","Threat","ISO Clause","Likelihood","Impact","Inherent Score","Inherent Rating","Control","Residual Score","Residual Rating","Department","Owner","Due Date"];
+  const rows=RISKS.map(r=>[r.id,`"${r.asset}"`,`"${r.threat}"`,r.iso,r.l,r.i,r.inherent,r.iRating,`"${r.control}"`,r.residual,r.rRating,r.dept,`"${r.owner}"`,r.due]);
+  const csv=[h,...rows].map(r=>r.join(",")).join("\n");
+  const a=document.createElement("a");
+  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
+  a.download="standard_bank_risk_register.csv";
+  a.click();
+}
+
+function drawHeatmap(){
+  const cv=document.getElementById("hmCanvas"),ctx=cv.getContext("2d");
+  const W=cv.width,H=cv.height,pad={t:36,l:58,r:20,b:58};
+  const cw=Math.floor((W-pad.l-pad.r)/5),ch=Math.floor((H-pad.t-pad.b)/5);
+  const cellBg=(l,i)=>{const s=l*i;return s>=20?"#fff0f0":s>=12?"#fff8ec":s>=6?"#eef5ff":"#f0faf2"};
+  ctx.clearRect(0,0,W,H);
+  for(let l=1;l<=5;l++){
+    for(let i=1;i<=5;i++){
+      const x=pad.l+(l-1)*cw,y=pad.t+(5-i)*ch;
+      ctx.fillStyle=cellBg(l,i);ctx.fillRect(x,y,cw,ch);
+      ctx.strokeStyle="rgba(0,0,0,0.07)";ctx.lineWidth=0.5;ctx.strokeRect(x,y,cw,ch);
+      ctx.fillStyle="#c0bfb8";ctx.font="10px sans-serif";ctx.textAlign="center";
+      ctx.fillText(l*i,x+cw/2,y+ch-8);
+    }
+  }
+  ctx.fillStyle="#888";ctx.font="11px sans-serif";
+  for(let n=1;n<=5;n++){
+    ctx.textAlign="center";ctx.fillText(n,pad.l+(n-1)*cw+cw/2,pad.t-10);
+    ctx.textAlign="right";ctx.fillText(n,pad.l-10,pad.t+(5-n)*ch+ch/2+4);
+  }
+  ctx.save();ctx.translate(14,H/2);ctx.rotate(-Math.PI/2);
+  ctx.textAlign="center";ctx.fillStyle="#888";ctx.font="11px sans-serif";
+  ctx.fillText("Impact →",0,0);ctx.restore();
+  ctx.textAlign="center";ctx.fillStyle="#888";ctx.font="11px sans-serif";
+  ctx.fillText("Likelihood →",pad.l+5*cw/2,H-12);
+
+  const buckets={};
+  RISKS.forEach(r=>{const k=`${r.l},${r.i}`;if(!buckets[k])buckets[k]=[];buckets[k].push(r.id)});
+  Object.entries(buckets).forEach(([k,ids])=>{
+    const [l,i]=k.split(",").map(Number),s=l*i;
+    const dot=s>=20?"#e24b4a":s>=12?"#ba7517":s>=6?"#185fa5":"#3b6d11";
+    const n=ids.length,cols=Math.ceil(Math.sqrt(n)),rows=Math.ceil(n/cols);
+    const r2=11,ox=pad.l+(l-1)*cw,oy=pad.t+(5-i)*ch;
+    const sx=(cw-cols*r2*2)/2,sy=(ch-rows*r2*2)/2;
+    ids.forEach((id,idx)=>{
+      const ci=idx%cols,ri=Math.floor(idx/cols);
+      const cx=ox+sx+ci*r2*2+r2,cy=oy+sy+ri*r2*2+r2;
+      ctx.fillStyle=dot;ctx.beginPath();ctx.arc(cx,cy,r2-1,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle="#fff";ctx.font="600 9px sans-serif";ctx.textAlign="center";
+      ctx.fillText(id.replace("R-",""),cx,cy+3);
+    });
+  });
+}
+
+let chartsReady=false;
+function buildCharts(){
+  if(chartsReady)return;chartsReady=true;
+  const tC="#2c2c2a",gC="rgba(0,0,0,0.06)";
+  const base={responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{x:{ticks:{color:tC,font:{size:11}},grid:{color:gC}},
+            y:{ticks:{color:tC,font:{size:11}},grid:{color:gC}}}};
+
+  const rats=["Critical","High","Medium","Low"];
+  const ic=rats.map(r=>RISKS.filter(x=>x.iRating===r).length);
+  const rc=rats.map(r=>RISKS.filter(x=>x.rRating===r).length);
+  document.getElementById("c1leg").innerHTML=`<div style="display:flex;gap:12px;font-size:11px;color:#888;margin-bottom:8px">
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:#e24b4a;display:inline-block"></span>Inherent</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:#b5d4f4;display:inline-block"></span>Residual</span>
+  </div>`;
+  new Chart(document.getElementById("c1"),{type:"bar",data:{labels:rats,datasets:[
+    {data:ic,backgroundColor:["#e24b4a","#ef9f27","#378add","#639922"],borderRadius:4},
+    {data:rc,backgroundColor:["#f09595","#fac775","#b5d4f4","#c0dd97"],borderRadius:4}
+  ]},options:{...base}});
+
+  const depts=[...new Set(RISKS.map(r=>r.dept))];
+  const dC=["#7F77DD","#1D9E75","#D85A30","#D4537E","#888780","#378ADD","#639922","#BA7517","#E24B4A"];
+  const dc=depts.map(d=>RISKS.filter(r=>r.dept===d).length);
+  document.getElementById("c2leg").innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:8px;font-size:11px;color:#888;margin-bottom:8px">
+    ${depts.map((d,i)=>`<span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:2px;background:${dC[i%dC.length]};display:inline-block"></span>${d}</span>`).join("")}
+  </div>`;
+  new Chart(document.getElementById("c2"),{type:"doughnut",data:{labels:depts,datasets:[{data:dc,backgroundColor:dC.slice(0,depts.length),borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+
+  const t10=[...RISKS].sort((a,b)=>b.inherent-a.inherent).slice(0,10);
+  new Chart(document.getElementById("c3"),{type:"bar",data:{labels:t10.map(r=>r.id),datasets:[{
+    data:t10.map(r=>r.inherent),
+    backgroundColor:t10.map(r=>r.inherent>=20?"#e24b4a":r.inherent>=12?"#ef9f27":"#378add"),borderRadius:4
+  }]},options:{...base,indexAxis:"y"}});
+
+  const clauses=[...new Set(RISKS.map(r=>r.iso.split(".").slice(0,2).join(".")))].sort();
+  new Chart(document.getElementById("c4"),{type:"bar",data:{labels:clauses,datasets:[{
+    data:clauses.map(c=>RISKS.filter(r=>r.iso.startsWith(c)).length),
+    backgroundColor:"#7F77DD",borderRadius:4
+  }]},options:{...base,scales:{...base.scales,x:{...base.scales.x,ticks:{...base.scales.x.ticks,maxRotation:45,autoSkip:false}}}}});
+}
+
+function renderPopia(){
+  const all=POPIA.flatMap(p=>p.controls);
+  const avg=Math.round(all.reduce((s,c)=>s+c.score,0)/all.length);
+  const pass=all.filter(c=>c.status==="pass").length,
+        part=all.filter(c=>c.status==="partial").length,
+        fail=all.filter(c=>c.status==="fail").length;
+  document.getElementById("popiaMetrics").innerHTML=`
+    <div class="metric"><div class="metric-label">Overall score</div><div class="metric-val" style="color:${avg>=70?"#3B6D11":avg>=50?"#854F0B":"#A32D2D"}">${avg}%</div></div>
+    <div class="metric"><div class="metric-label">Passed</div><div class="metric-val" style="color:#3B6D11">${pass}</div></div>
+    <div class="metric"><div class="metric-label">Partial</div><div class="metric-val" style="color:#854F0B">${part}</div></div>
+    <div class="metric"><div class="metric-label">Failed</div><div class="metric-val" style="color:#A32D2D">${fail}</div></div>`;
+  document.getElementById("popiaGrid").innerHTML=POPIA.map(p=>{
+    const a=Math.round(p.controls.reduce((s,c)=>s+c.score,0)/p.controls.length);
+    const col=a>=70?"#3B6D11":a>=50?"#854F0B":"#A32D2D";
+    return`<div class="popia-card">
+      <div class="popia-top">
+        <div><div class="popia-section-name">${p.section} — ${p.title}</div>
+        <div class="popia-sub">${p.controls.length} controls assessed</div></div>
+        <div class="popia-pct" style="color:${col}">${a}%</div>
+      </div>
+      <div class="progress"><div class="prog-fill" style="width:${a}%;background:${col}"></div></div>
+    </div>`;
+  }).join("");
+  const sl={pass:"badge-pass",partial:"badge-partial",fail:"badge-fail"};
+  document.getElementById("popiaBody").innerHTML=POPIA.flatMap(p=>p.controls.map(c=>`<tr>
+    <td style="white-space:nowrap;font-weight:600;font-size:11px">${p.section}</td>
+    <td style="max-width:200px;word-break:break-word">${c.req}</td>
+    <td><span class="badge ${sl[c.status]}">${c.status.charAt(0).toUpperCase()+c.status.slice(1)}</span></td>
+    <td><div class="score-wrap"><div class="score-bar"><div class="score-fill" style="width:${c.score}%;background:${c.score>=70?"#639922":c.score>=50?"#BA7517":"#E24B4A"}"></div></div>
+    <span style="font-size:11px;color:#888">${c.score}%</span></div></td>
+    <td style="font-size:11px;color:#888;max-width:260px;word-break:break-word">${c.finding}</td>
+  </tr>`)).join("");
+}
+
+function showTab(name,el){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+  el.classList.add("active");
+  document.getElementById(name).classList.add("active");
+  if(name==="heatmap")requestAnimationFrame(drawHeatmap);
+  if(name==="charts")requestAnimationFrame(buildCharts);
+}
+
+renderMetrics();
+populateFilters();
+renderTable();
+renderPopia();
+</script>
+</body>
+</html>
